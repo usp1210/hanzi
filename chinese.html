@@ -1,0 +1,702 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hanzi Lab — Learn Chinese Characters</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&family=Noto+Sans+SC:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FBF1E3;
+    --card:#FFFFFF;
+    --seal:#D8442B;        /* cinnabar seal red — primary */
+    --seal-dark:#b3361f;
+    --gold:#F0B429;
+    --jade:#2BA88F;
+    --sky:#3E8BD8;
+    --coral:#EF7A6D;
+    --ink:#2B2118;         /* warm ink black */
+    --ink-soft:#857363;
+    --good:#2BA88F;
+    --bad:#E0544B;
+    --r:22px;
+    --shadow:0 10px 0 rgba(43,33,24,.10);
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0;
+    font-family:"Nunito",system-ui,sans-serif;
+    color:var(--ink);
+    background:
+      radial-gradient(circle at 12% 8%, rgba(240,180,41,.20), transparent 38%),
+      radial-gradient(circle at 88% 6%, rgba(216,68,43,.16), transparent 40%),
+      radial-gradient(circle at 50% 100%, rgba(43,168,143,.16), transparent 45%),
+      var(--bg);
+    min-height:100vh;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:26px 18px 70px}
+
+  /* ---------- Hero ---------- */
+  header{text-align:center;margin:8px 0 26px;position:relative}
+  .badge{
+    display:inline-flex;align-items:center;gap:8px;
+    background:var(--ink);color:#fff;font-family:"Fredoka";font-weight:500;
+    padding:7px 16px;border-radius:999px;font-size:.85rem;letter-spacing:.5px;
+    text-transform:uppercase;
+  }
+  .badge .zi{font-family:"Noto Sans SC";font-weight:700;color:var(--gold);letter-spacing:0;text-transform:none}
+  h1{
+    font-family:"Fredoka";font-weight:700;line-height:.95;
+    font-size:clamp(2.6rem,9vw,4.6rem);margin:14px 0 6px;letter-spacing:-1px;
+  }
+  h1 .pop{color:var(--seal);position:relative;display:inline-block}
+  h1 .pop::after{content:"";position:absolute;left:0;right:0;bottom:6px;height:14px;
+    background:var(--gold);z-index:-1;border-radius:8px;transform:rotate(-1.2deg)}
+  .tag{color:var(--ink-soft);font-weight:700;font-size:clamp(1rem,3.5vw,1.2rem);margin:0}
+  /* signature: a little red seal stamp */
+  .seal-stamp{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:46px;height:46px;border-radius:10px;background:var(--seal);
+    color:#fff;font-family:"Noto Sans SC";font-weight:900;font-size:1.5rem;
+    transform:rotate(-6deg);box-shadow:0 4px 0 var(--seal-dark);
+    position:absolute;top:-6px;right:4px;
+  }
+  @media(max-width:560px){.seal-stamp{position:static;margin:10px auto 0;transform:rotate(-6deg)}}
+
+  /* ---------- Level toggle ---------- */
+  .levels{display:flex;justify-content:center;gap:10px;margin:22px 0 6px;flex-wrap:wrap}
+  .level{
+    font-family:"Fredoka";font-weight:600;font-size:1rem;cursor:pointer;
+    border:3px solid var(--ink);background:#fff;color:var(--ink);
+    padding:10px 20px;border-radius:999px;transition:transform .08s, background .15s;
+  }
+  .level:hover{transform:translateY(-2px)}
+  .level[aria-pressed="true"]{background:var(--ink);color:#fff}
+  .wordcount{text-align:center;color:var(--ink-soft);font-weight:700;font-size:.9rem;margin-top:8px}
+
+  /* ---------- Game picker ---------- */
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-top:26px}
+  @media(max-width:560px){.grid{grid-template-columns:1fr}}
+  .game-card{
+    text-align:left;cursor:pointer;border:none;font:inherit;color:var(--ink);
+    background:var(--card);border-radius:var(--r);padding:22px;
+    box-shadow:var(--shadow);transition:transform .1s ease, box-shadow .1s ease;
+    border:3px solid var(--ink);position:relative;overflow:hidden;
+  }
+  .game-card:hover{transform:translateY(-4px);box-shadow:0 14px 0 rgba(43,33,24,.12)}
+  .game-card:active{transform:translateY(0);box-shadow:0 6px 0 rgba(43,33,24,.12)}
+  .game-card .ic{font-size:2.4rem;display:block;margin-bottom:10px}
+  .game-card h3{font-family:"Fredoka";font-weight:600;font-size:1.35rem;margin:0 0 4px}
+  .game-card p{margin:0;color:var(--ink-soft);font-weight:600;font-size:.92rem}
+  .game-card .stripe{position:absolute;top:0;left:0;right:0;height:8px}
+  .c1 .stripe{background:var(--coral)} .c2 .stripe{background:var(--sky)}
+  .c3 .stripe{background:var(--jade)} .c4 .stripe{background:var(--gold)}
+
+  /* ---------- Game stage ---------- */
+  .stage{display:none}
+  .stage.on{display:block;animation:pop .25s ease}
+  @keyframes pop{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+  .back{font-family:"Fredoka";font-weight:600;cursor:pointer;border:3px solid var(--ink);
+    background:#fff;color:var(--ink);padding:9px 16px;border-radius:999px}
+  .back:hover{background:var(--ink);color:#fff}
+  .score{font-family:"Fredoka";font-weight:600;font-size:1.05rem;background:#fff;
+    border:3px solid var(--ink);border-radius:999px;padding:8px 16px;display:flex;gap:6px;align-items:center}
+  .panel{background:var(--card);border:3px solid var(--ink);border-radius:var(--r);
+    box-shadow:var(--shadow);padding:26px;min-height:300px}
+  .gtitle{font-family:"Fredoka";font-weight:600;font-size:1.5rem;margin:0 0 4px}
+  .ghint{color:var(--ink-soft);font-weight:700;margin:0 0 20px;font-size:.95rem}
+
+  /* prompt character */
+  .prompt{text-align:center;padding:14px 6px 22px}
+  .prompt .small{color:var(--ink-soft);font-weight:800;text-transform:uppercase;letter-spacing:1px;font-size:.78rem}
+  .prompt .hanzi{font-family:"Noto Sans SC";font-weight:900;font-size:clamp(4rem,18vw,6.5rem);
+    margin:6px 0;color:var(--ink);line-height:1}
+  .prompt .pinyin{font-family:"Fredoka";font-weight:600;font-size:clamp(1.3rem,5vw,1.9rem);color:var(--seal);margin:2px 0}
+  .prompt .def{font-weight:700;font-size:clamp(1.05rem,4vw,1.4rem);line-height:1.4;max-width:620px;margin:6px auto}
+
+  /* listen button */
+  .listen{font:inherit;font-family:"Fredoka";font-weight:600;cursor:pointer;
+    border:3px solid var(--ink);background:#fff;color:var(--ink);
+    border-radius:999px;padding:8px 18px;display:inline-flex;gap:8px;align-items:center;
+    transition:transform .08s, background .12s}
+  .listen:hover{transform:translateY(-2px);background:#FFF6E6}
+  .listen:active{transform:translateY(1px)}
+
+  /* choice buttons */
+  .choices{display:grid;gap:12px}
+  .choice{font:inherit;font-weight:700;font-size:1.05rem;text-align:left;cursor:pointer;
+    background:#FFF6E6;border:3px solid var(--ink);border-radius:16px;padding:15px 18px;
+    color:var(--ink);transition:transform .07s, background .12s}
+  .choice:hover:not(:disabled){transform:translateX(4px);background:#FCEBC9}
+  .choice:disabled{cursor:default}
+  .choice.right{background:var(--good);border-color:#1f8a73;color:#fff}
+  .choice.wrong{background:var(--bad);border-color:#c0463e;color:#fff}
+
+  /* flashcard */
+  .fc-area{display:flex;flex-direction:column;align-items:center;gap:18px}
+  .flip{width:100%;max-width:460px;height:260px;perspective:1200px;cursor:pointer}
+  .flip-inner{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+  .flip.flipped .flip-inner{transform:rotateY(180deg)}
+  .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:var(--r);
+    border:3px solid var(--ink);display:flex;flex-direction:column;align-items:center;
+    justify-content:center;text-align:center;padding:24px}
+  .front{background:var(--seal);color:#fff}
+  .front .w{font-family:"Noto Sans SC";font-weight:900;font-size:clamp(4.5rem,20vw,7rem);line-height:1}
+  .front .flip-hint{position:absolute;bottom:14px;font-weight:800;opacity:.8;font-size:.8rem;text-transform:uppercase;letter-spacing:1px}
+  .back-face{background:#fff;color:var(--ink);transform:rotateY(180deg)}
+  .back-face .py{font-family:"Fredoka";font-weight:600;font-size:clamp(1.6rem,6vw,2.2rem);color:var(--seal);margin-bottom:8px}
+  .back-face .d{font-weight:700;font-size:clamp(1.1rem,4.5vw,1.5rem);line-height:1.4}
+
+  /* pinyin bee input */
+  .spell-in{font:inherit;font-family:"Fredoka";font-weight:600;font-size:1.5rem;text-align:center;
+    width:100%;max-width:420px;border:3px solid var(--ink);border-radius:16px;padding:14px;
+    color:var(--ink);letter-spacing:2px}
+  .spell-in:focus{outline:none;border-color:var(--seal);box-shadow:0 0 0 4px rgba(216,68,43,.2)}
+  .reveal{font-family:"Fredoka";font-weight:600;color:var(--ink-soft);font-size:1.2rem;letter-spacing:4px;margin-top:6px;min-height:1.4em}
+
+  /* memory match */
+  .match-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  @media(max-width:560px){.match-grid{grid-template-columns:repeat(2,1fr)}}
+  .tile{aspect-ratio:1/1.05;border:3px solid var(--ink);border-radius:16px;cursor:pointer;
+    background:var(--gold);font:inherit;display:flex;align-items:center;justify-content:center;
+    text-align:center;padding:8px;font-weight:800;font-size:.85rem;line-height:1.2;color:var(--ink);
+    transition:transform .1s, background .15s}
+  .tile.word{font-family:"Noto Sans SC";font-weight:900;font-size:2.2rem}
+  .tile.hidden{background:var(--seal);color:transparent}
+  .tile.hidden::after{content:"?";color:#fff;font-family:"Fredoka";font-size:1.6rem}
+  .tile.matched{background:var(--jade);color:#fff;cursor:default;opacity:.85}
+  .tile.sel{transform:scale(.95);outline:4px solid var(--coral);outline-offset:-2px}
+
+  /* shared controls */
+  .controls{display:flex;gap:12px;justify-content:center;margin-top:24px;flex-wrap:wrap}
+  .btn{font-family:"Fredoka";font-weight:600;font-size:1.05rem;cursor:pointer;border:3px solid var(--ink);
+    border-radius:999px;padding:12px 26px;background:var(--seal);color:#fff;box-shadow:0 6px 0 var(--seal-dark);
+    transition:transform .07s, box-shadow .07s}
+  .btn:hover{transform:translateY(-2px);box-shadow:0 8px 0 var(--seal-dark)}
+  .btn:active{transform:translateY(3px);box-shadow:0 2px 0 var(--seal-dark)}
+  .btn.ghost{background:#fff;color:var(--ink);box-shadow:0 6px 0 rgba(43,33,24,.15)}
+  .btn:disabled{opacity:.4;cursor:default;transform:none;box-shadow:0 6px 0 var(--seal-dark)}
+
+  .feedback{text-align:center;font-family:"Fredoka";font-weight:600;font-size:1.3rem;min-height:1.6em;margin-top:18px}
+  .feedback.good{color:var(--good)} .feedback.bad{color:var(--bad)}
+  .progress{height:12px;background:#F1DFC2;border:3px solid var(--ink);border-radius:999px;overflow:hidden;margin-bottom:20px}
+  .progress span{display:block;height:100%;background:var(--coral);width:0;transition:width .3s}
+
+  /* win screen */
+  .win{text-align:center;padding:30px 10px}
+  .win .em{font-size:4rem}
+  .win h3{font-family:"Fredoka";font-weight:700;font-size:2rem;margin:10px 0 4px}
+  .win p{color:var(--ink-soft);font-weight:700;font-size:1.15rem;margin:0 0 8px}
+
+  /* confetti */
+  #confetti{position:fixed;inset:0;pointer-events:none;z-index:50}
+
+  footer{text-align:center;color:var(--ink-soft);font-weight:700;font-size:.85rem;margin-top:34px}
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation:none!important;transition:none!important}
+  }
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="seal-stamp">学</span>
+    <span class="badge"><span class="zi">汉字</span> · Character Games</span>
+    <h1>Hanzi <span class="pop">Lab</span></h1>
+    <p class="tag">Learn Chinese characters by playing. Pick a level, then pick a game!</p>
+
+    <div class="levels" role="group" aria-label="Choose a character level">
+      <button class="level" data-level="beginner" aria-pressed="true">🌱 Beginner</button>
+      <button class="level" data-level="intermediate" aria-pressed="false">🚀 Intermediate</button>
+    </div>
+    <p class="wordcount" id="wordcount"></p>
+    <div class="levels" style="margin-top:0"><button class="level" id="newset">🔀 New set</button></div>
+  </header>
+
+  <!-- GAME PICKER -->
+  <section id="menu" class="grid">
+    <button class="game-card c1" data-game="flashcards">
+      <span class="stripe"></span><span class="ic">🃏</span>
+      <h3>Flashcards</h3><p>Flip cards to learn each character, its pinyin, and meaning.</p>
+    </button>
+    <button class="game-card c2" data-game="quiz">
+      <span class="stripe"></span><span class="ic">❓</span>
+      <h3>Meaning Quiz</h3><p>See a character, then pick the right meaning.</p>
+    </button>
+    <button class="game-card c3" data-game="match">
+      <span class="stripe"></span><span class="ic">🧩</span>
+      <h3>Memory Match</h3><p>Match each character to its meaning. Find all the pairs!</p>
+    </button>
+    <button class="game-card c4" data-game="pinyin">
+      <span class="stripe"></span><span class="ic">🅿️</span>
+      <h3>Pinyin Bee</h3><p>See a character, then type its pinyin. Tones optional!</p>
+    </button>
+  </section>
+
+  <!-- GAME STAGE -->
+  <section id="stage" class="stage">
+    <div class="topbar">
+      <button class="back" id="backBtn">← All games</button>
+      <div class="score">⭐ <span id="scoreVal">0</span></div>
+    </div>
+    <div class="panel" id="panel"></div>
+  </section>
+
+  <footer>Made for curious character collectors 🀄</footer>
+</div>
+
+<canvas id="confetti"></canvas>
+
+<script>
+/* ============ CHARACTER DATA ============ */
+/* c = character, p = pinyin (with tone marks), m = meaning.
+   Each day a fresh subset (DAILY_COUNT) is chosen deterministically from
+   the date — see the DAILY section below. */
+const CHARS = {
+  beginner: [
+    {c:"我", p:"wǒ",   m:"I; me"},
+    {c:"你", p:"nǐ",   m:"you"},
+    {c:"他", p:"tā",   m:"he; him"},
+    {c:"她", p:"tā",   m:"she; her"},
+    {c:"好", p:"hǎo",  m:"good; well"},
+    {c:"是", p:"shì",  m:"to be; is"},
+    {c:"不", p:"bù",   m:"not; no"},
+    {c:"人", p:"rén",  m:"person; people"},
+    {c:"大", p:"dà",   m:"big; large"},
+    {c:"小", p:"xiǎo", m:"small; little"},
+    {c:"中", p:"zhōng",m:"middle; center; China"},
+    {c:"国", p:"guó",  m:"country; nation"},
+    {c:"学", p:"xué",  m:"to study; to learn"},
+    {c:"生", p:"shēng",m:"to be born; life; student"},
+    {c:"水", p:"shuǐ", m:"water"},
+    {c:"火", p:"huǒ",  m:"fire"},
+    {c:"山", p:"shān", m:"mountain"},
+    {c:"口", p:"kǒu",  m:"mouth; opening"},
+    {c:"日", p:"rì",   m:"sun; day"},
+    {c:"月", p:"yuè",  m:"moon; month"},
+    {c:"木", p:"mù",   m:"wood; tree"},
+    {c:"天", p:"tiān", m:"sky; day"},
+    {c:"上", p:"shàng",m:"up; above; on"},
+    {c:"下", p:"xià",  m:"down; below; under"},
+    {c:"左", p:"zuǒ",  m:"left"},
+    {c:"右", p:"yòu",  m:"right"},
+    {c:"妈", p:"mā",   m:"mom; mother"},
+    {c:"爸", p:"bà",   m:"dad; father"},
+    {c:"家", p:"jiā",  m:"home; family"},
+    {c:"爱", p:"ài",   m:"to love"},
+    {c:"吃", p:"chī",  m:"to eat"},
+    {c:"喝", p:"hē",   m:"to drink"},
+    {c:"看", p:"kàn",  m:"to look; to watch"},
+    {c:"听", p:"tīng", m:"to listen; to hear"},
+    {c:"说", p:"shuō", m:"to speak; to say"},
+    {c:"读", p:"dú",   m:"to read"},
+    {c:"书", p:"shū",  m:"book"},
+    {c:"名", p:"míng", m:"name"},
+    {c:"字", p:"zì",   m:"character; word"},
+    {c:"车", p:"chē",  m:"car; vehicle"},
+    {c:"飞", p:"fēi",  m:"to fly"},
+    {c:"鱼", p:"yú",   m:"fish"},
+    {c:"鸟", p:"niǎo", m:"bird"},
+    {c:"马", p:"mǎ",   m:"horse"},
+    {c:"猫", p:"māo",  m:"cat"},
+    {c:"狗", p:"gǒu",  m:"dog"},
+    {c:"手", p:"shǒu", m:"hand"},
+    {c:"心", p:"xīn",  m:"heart; mind"},
+    {c:"力", p:"lì",   m:"strength; power"},
+    {c:"门", p:"mén",  m:"door; gate"}
+  ],
+  intermediate: [
+    {c:"谢", p:"xiè",  m:"to thank"},
+    {c:"请", p:"qǐng", m:"please; to invite"},
+    {c:"问", p:"wèn",  m:"to ask"},
+    {c:"题", p:"tí",   m:"topic; problem; question"},
+    {c:"错", p:"cuò",  m:"wrong; mistake"},
+    {c:"对", p:"duì",  m:"correct; toward"},
+    {c:"快", p:"kuài", m:"fast; quick; soon"},
+    {c:"慢", p:"màn",  m:"slow"},
+    {c:"忙", p:"máng", m:"busy"},
+    {c:"累", p:"lèi",  m:"tired"},
+    {c:"新", p:"xīn",  m:"new"},
+    {c:"旧", p:"jiù",  m:"old (used things)"},
+    {c:"高", p:"gāo",  m:"tall; high"},
+    {c:"矮", p:"ǎi",   m:"short (height)"},
+    {c:"长", p:"cháng",m:"long"},
+    {c:"短", p:"duǎn", m:"short (length)"},
+    {c:"多", p:"duō",  m:"many; much"},
+    {c:"少", p:"shǎo", m:"few; little"},
+    {c:"贵", p:"guì",  m:"expensive"},
+    {c:"钱", p:"qián", m:"money"},
+    {c:"买", p:"mǎi",  m:"to buy"},
+    {c:"卖", p:"mài",  m:"to sell"},
+    {c:"做", p:"zuò",  m:"to do; to make"},
+    {c:"想", p:"xiǎng",m:"to want; to think; to miss"},
+    {c:"能", p:"néng", m:"can; to be able to"},
+    {c:"会", p:"huì",  m:"can; will; meeting"},
+    {c:"要", p:"yào",  m:"to want; will; need"},
+    {c:"给", p:"gěi",  m:"to give; for"},
+    {c:"找", p:"zhǎo", m:"to look for; to find"},
+    {c:"帮", p:"bāng", m:"to help"},
+    {c:"走", p:"zǒu",  m:"to walk; to leave"},
+    {c:"跑", p:"pǎo",  m:"to run"},
+    {c:"坐", p:"zuò",  m:"to sit; to take (transit)"},
+    {c:"站", p:"zhàn", m:"to stand; station"},
+    {c:"开", p:"kāi",  m:"to open; to drive; to start"},
+    {c:"关", p:"guān", m:"to close; to turn off"},
+    {c:"笑", p:"xiào", m:"to laugh; to smile"},
+    {c:"哭", p:"kū",   m:"to cry"},
+    {c:"玩", p:"wán",  m:"to play; to have fun"},
+    {c:"睡", p:"shuì", m:"to sleep"},
+    {c:"跳", p:"tiào", m:"to jump"},
+    {c:"唱", p:"chàng",m:"to sing"},
+    {c:"画", p:"huà",  m:"to draw; painting"},
+    {c:"写", p:"xiě",  m:"to write"},
+    {c:"教", p:"jiāo", m:"to teach"},
+    {c:"懂", p:"dǒng", m:"to understand"},
+    {c:"记", p:"jì",   m:"to remember; to record"},
+    {c:"忘", p:"wàng", m:"to forget"},
+    {c:"菜", p:"cài",  m:"dish; vegetable; food"},
+    {c:"茶", p:"chá",  m:"tea"}
+  ]
+};
+
+/* ============ STATE ============ */
+let level = "beginner";
+let score = 0;
+let currentGame = null;
+
+const $ = s => document.querySelector(s);
+const menu = $("#menu"), stage = $("#stage"), panel = $("#panel");
+const scoreVal = $("#scoreVal"), wordcount = $("#wordcount");
+
+const shuffle = a => { a=[...a]; for(let i=a.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;[a[i],a[j]]=[a[j],a[i]];} return a; };
+
+/* ============ AUDIO (pronunciation) ============ */
+/* Uses the browser's built-in speech synthesis with a Chinese voice. */
+let voicesReady = false;
+function loadVoices(){ if(window.speechSynthesis){ speechSynthesis.getVoices(); voicesReady=true; } }
+if(window.speechSynthesis){ loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; }
+function speak(text){
+  if(!window.speechSynthesis) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = "zh-CN"; u.rate = 0.85;
+  const v = speechSynthesis.getVoices().find(v=>/zh|chinese|中文|普通话/i.test((v.lang||"")+(v.name||"")));
+  if(v) u.voice = v;
+  speechSynthesis.speak(u);
+}
+function listenBtn(ch){ return `<button class="listen" data-say="${ch}">🔊 Listen</button>`; }
+function wireListen(scope){
+  (scope||document).querySelectorAll(".listen").forEach(b=>{
+    b.addEventListener("click",e=>{e.stopPropagation();speak(b.dataset.say);});
+  });
+}
+
+/* ============ PINYIN NORMALIZER ============ */
+/* Strips tone marks/numbers so beginners can type "hao", "hao3" or "hǎo". */
+function normPinyin(s){
+  return (s||"").toString().toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g,"") // remove tone diacritics
+    .replace(/ü/g,"u").replace(/v/g,"u")
+    .replace(/[0-5]/g,"")                            // remove tone numbers
+    .replace(/[^a-z]/g,"");                          // remove spaces/punct
+}
+
+/* ============ SESSION SET ============ */
+/* Picks a fresh random subset on every page load. It's cached per level for
+   this load so switching games doesn't reshuffle mid-session — reload the
+   page (or tap "New set") to get a different batch. */
+const DAILY_COUNT = 12;
+const _sessionCache = {};
+function sessionSet(lvl){
+  if(_sessionCache[lvl]) return _sessionCache[lvl];
+  const pool = CHARS[lvl];
+  const n = Math.min(DAILY_COUNT, pool.length);
+  const set = shuffle(pool).slice(0, n);
+  _sessionCache[lvl] = set;
+  return set;
+}
+function reshuffle(){
+  delete _sessionCache[level];
+  sessionSet(level);
+  updateCount();
+  if(currentGame) startGame(currentGame); else goMenu();
+}
+const cards = () => sessionSet(level);
+const setScore = n => { score=n; scoreVal.textContent=n; };
+const addScore = n => setScore(score+n);
+
+function updateCount(){
+  wordcount.textContent = `✨ ${cards().length} characters this round — reload or tap "New set" for a fresh batch!`;
+}
+
+/* ============ LEVEL TOGGLE ============ */
+document.querySelectorAll(".level").forEach(b=>{
+  b.addEventListener("click",()=>{
+    document.querySelectorAll(".level").forEach(x=>x.setAttribute("aria-pressed","false"));
+    b.setAttribute("aria-pressed","true");
+    level = b.dataset.level;
+    updateCount();
+    if(currentGame) startGame(currentGame);
+  });
+});
+
+/* ============ NAV ============ */
+document.querySelectorAll(".game-card").forEach(c=>{
+  c.addEventListener("click",()=>startGame(c.dataset.game));
+});
+$("#backBtn").addEventListener("click",goMenu);
+$("#newset").addEventListener("click",reshuffle);
+
+function goMenu(){
+  currentGame=null;
+  if(window.speechSynthesis) speechSynthesis.cancel();
+  stage.classList.remove("on");
+  menu.style.display="grid";
+  document.querySelector("header").scrollIntoView({behavior:"smooth",block:"start"});
+}
+function startGame(game){
+  currentGame=game;
+  setScore(0);
+  menu.style.display="none";
+  stage.classList.add("on");
+  ({flashcards:gameFlash, quiz:gameQuiz, match:gameMatch, pinyin:gamePinyin})[game]();
+}
+
+/* ============ 1. FLASHCARDS ============ */
+function gameFlash(){
+  const deck = shuffle(cards());
+  let i = 0;
+  function render(){
+    const c = deck[i];
+    panel.innerHTML = `
+      <h2 class="gtitle">🃏 Flashcards</h2>
+      <p class="ghint">Card ${i+1} of ${deck.length} — tap the card to flip it over.</p>
+      <div class="fc-area">
+        <div class="flip" id="flip" tabindex="0" role="button" aria-label="Flip card">
+          <div class="flip-inner">
+            <div class="face front"><div class="w">${c.c}</div><div class="flip-hint">tap to flip</div></div>
+            <div class="face back-face"><div class="py">${c.p}</div><div class="d">${c.m}</div></div>
+          </div>
+        </div>
+        ${listenBtn(c.c)}
+        <div class="controls">
+          <button class="btn ghost" id="prev" ${i===0?"disabled":""}>← Back</button>
+          <button class="btn" id="next">${i===deck.length-1?"Finish ✓":"Got it! →"}</button>
+        </div>
+      </div>`;
+    const flip = $("#flip");
+    const toggle = ()=>flip.classList.toggle("flipped");
+    flip.addEventListener("click",toggle);
+    flip.addEventListener("keydown",e=>{if(e.key===" "||e.key==="Enter"){e.preventDefault();toggle();}});
+    wireListen(panel);
+    $("#prev").addEventListener("click",()=>{if(i>0){i--;render();}});
+    $("#next").addEventListener("click",()=>{
+      if(i<deck.length-1){ addScore(1); i++; render(); }
+      else { addScore(1); winScreen("🎉","You finished the deck!",`You reviewed all ${deck.length} characters.`); }
+    });
+  }
+  render();
+}
+
+/* ============ 2. MEANING QUIZ ============ */
+function gameQuiz(){
+  const order = shuffle(cards());
+  let i = 0, correct = 0;
+  function render(){
+    const c = order[i];
+    const opts = shuffle([c, ...shuffle(cards().filter(x=>x.c!==c.c)).slice(0,3)]);
+    panel.innerHTML = `
+      <h2 class="gtitle">❓ Meaning Quiz</h2>
+      <p class="ghint">Question ${i+1} of ${order.length} — what does this character mean?</p>
+      <div class="progress"><span style="width:${(i/order.length)*100}%"></span></div>
+      <div class="prompt">
+        <div class="small">What does this mean?</div>
+        <div class="hanzi">${c.c}</div>
+        <div class="pinyin">${c.p}</div>
+        ${listenBtn(c.c)}
+      </div>
+      <div class="choices" id="choices"></div>
+      <div class="feedback" id="fb"></div>`;
+    wireListen(panel);
+    const box = $("#choices");
+    opts.forEach(o=>{
+      const b=document.createElement("button");
+      b.className="choice"; b.textContent=o.m;
+      b.addEventListener("click",()=>pick(b,o,c));
+      box.appendChild(b);
+    });
+  }
+  function pick(btn,opt,c){
+    [...$("#choices").children].forEach(b=>b.disabled=true);
+    const fb=$("#fb");
+    if(opt.c===c.c){
+      btn.classList.add("right"); fb.textContent="Correct! ⭐"; fb.className="feedback good";
+      correct++; addScore(2); burst(); speak(c.c);
+    } else {
+      btn.classList.add("wrong");
+      [...$("#choices").children].forEach(b=>{if(b.textContent===c.m)b.classList.add("right");});
+      fb.textContent=`${c.c} means: ${c.m}`; fb.className="feedback bad";
+    }
+    setTimeout(()=>{
+      if(i<order.length-1){ i++; render(); }
+      else winScreen(correct===order.length?"🏆":"👍","Quiz complete!",`You got ${correct} of ${order.length} correct.`);
+    },1200);
+  }
+  render();
+}
+
+/* ============ 3. MEMORY MATCH ============ */
+function gameMatch(){
+  const picks = shuffle(cards()).slice(0,4);
+  let tiles=[];
+  picks.forEach((p,idx)=>{
+    tiles.push({id:idx,type:"word",text:p.c,say:p.c});
+    tiles.push({id:idx,type:"def", text:p.m});
+  });
+  tiles = shuffle(tiles);
+  let first=null, lock=false, found=0, tries=0;
+  function render(){
+    panel.innerHTML=`
+      <h2 class="gtitle">🧩 Memory Match</h2>
+      <p class="ghint">Flip two tiles to match a character with its meaning. Find all 4 pairs!</p>
+      <div class="match-grid" id="grid"></div>`;
+    const grid=$("#grid");
+    tiles.forEach((t,idx)=>{
+      const el=document.createElement("button");
+      el.className="tile hidden"+(t.type==="word"?" word":"");
+      el.dataset.idx=idx;
+      el.addEventListener("click",()=>flip(el,t));
+      grid.appendChild(el);
+    });
+  }
+  function flip(el,t){
+    if(lock||el.classList.contains("matched")||el.classList.contains("sel"))return;
+    el.classList.remove("hidden"); el.classList.add("sel"); el.textContent=t.text;
+    if(t.say) speak(t.say);
+    if(!first){ first={el,t}; return; }
+    tries++;
+    if(first.t.id===t.id && first.el!==el){
+      first.el.classList.add("matched"); el.classList.add("matched");
+      first.el.classList.remove("sel"); el.classList.remove("sel");
+      found++; addScore(2); burst(); first=null;
+      if(found===picks.length){
+        setTimeout(()=>winScreen("🎯","All matched!",`You found every pair in ${tries} tries.`),500);
+      }
+    } else {
+      lock=true;
+      setTimeout(()=>{
+        [first.el,el].forEach(x=>{x.classList.add("hidden");x.classList.remove("sel");x.textContent="";});
+        first=null; lock=false;
+      },900);
+    }
+  }
+  render();
+}
+
+/* ============ 4. PINYIN BEE ============ */
+function gamePinyin(){
+  const order = shuffle(cards());
+  let i=0, correct=0, peeked=false;
+  function render(){
+    const c=order[i]; peeked=false;
+    panel.innerHTML=`
+      <h2 class="gtitle">🅿️ Pinyin Bee</h2>
+      <p class="ghint">Character ${i+1} of ${order.length} — type the pinyin. Tones are optional.</p>
+      <div class="progress"><span style="width:${(i/order.length)*100}%"></span></div>
+      <div class="prompt">
+        <div class="small">Type the pinyin for…</div>
+        <div class="hanzi">${c.c}</div>
+        <div class="def">"${c.m}"</div>
+        ${listenBtn(c.c)}
+      </div>
+      <div class="fc-area">
+        <input class="spell-in" id="answer" placeholder="e.g. hao" autocomplete="off" autocapitalize="off" spellcheck="false">
+        <div class="reveal" id="reveal"></div>
+        <div class="controls">
+          <button class="btn ghost" id="peek">👀 Hint</button>
+          <button class="btn" id="check">Check ✓</button>
+        </div>
+        <div class="feedback" id="fb"></div>
+      </div>`;
+    wireListen(panel);
+    const input=$("#answer"); input.focus();
+    input.addEventListener("keydown",e=>{if(e.key==="Enter")check();});
+    $("#check").addEventListener("click",check);
+    $("#peek").addEventListener("click",()=>{
+      peeked=true;
+      const bare = normPinyin(c.p);
+      $("#reveal").textContent = bare[0].toUpperCase()+" "+"• ".repeat(Math.max(0,bare.length-1)).trim();
+    });
+    function check(){
+      const ans=input.value.trim();
+      if(!ans)return;
+      const fb=$("#fb");
+      if(normPinyin(ans)===normPinyin(c.p)){
+        fb.innerHTML=`Correct! It's <b>${c.p}</b> ⭐`; fb.className="feedback good";
+        correct++; addScore(peeked?1:3); burst(); speak(c.c);
+        input.disabled=true; $("#check").disabled=true; $("#peek").disabled=true;
+        setTimeout(next,1100);
+      } else {
+        fb.textContent="Not quite — try again, or use a hint."; fb.className="feedback bad";
+        input.classList.add("sel"); setTimeout(()=>input.classList.remove("sel"),300);
+        input.select();
+      }
+    }
+    function next(){
+      if(i<order.length-1){ i++; render(); }
+      else winScreen(correct===order.length?"🏆":"🌟","Great work!",`You got ${correct} of ${order.length} right.`);
+    }
+  }
+  render();
+}
+
+/* ============ WIN SCREEN ============ */
+function winScreen(emoji,title,sub){
+  burst(true);
+  panel.innerHTML=`
+    <div class="win">
+      <div class="em">${emoji}</div>
+      <h3>${title}</h3>
+      <p>${sub}</p>
+      <p>You earned <strong>${score}</strong> stars ⭐</p>
+      <div class="controls">
+        <button class="btn" id="again">Play again</button>
+        <button class="btn ghost" id="menuBtn">Other games</button>
+      </div>
+    </div>`;
+  $("#again").addEventListener("click",()=>startGame(currentGame));
+  $("#menuBtn").addEventListener("click",goMenu);
+}
+
+/* ============ CONFETTI ============ */
+const cv=$("#confetti"), ctx=cv.getContext("2d");
+let parts=[];
+function resize(){cv.width=innerWidth;cv.height=innerHeight;}
+addEventListener("resize",resize); resize();
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+function burst(big){
+  if(reduced)return;
+  const colors=["#D8442B","#F0B429","#EF7A6D","#2BA88F","#3E8BD8"];
+  const n=big?120:34;
+  for(let k=0;k<n;k++){
+    parts.push({x:innerWidth/2,y:innerHeight*0.35,
+      vx:(Math.random()-.5)*(big?14:9),vy:(Math.random()*-1-(big?7:5)),
+      g:.3,s:6+Math.random()*7,c:colors[(Math.random()*colors.length)|0],
+      rot:Math.random()*6,vr:(Math.random()-.5)*.3,life:90});
+  }
+  if(!raf)loop();
+}
+let raf=null;
+function loop(){
+  ctx.clearRect(0,0,cv.width,cv.height);
+  parts.forEach(p=>{p.vy+=p.g;p.x+=p.vx;p.y+=p.vy;p.rot+=p.vr;p.life--;
+    ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot);ctx.fillStyle=p.c;
+    ctx.fillRect(-p.s/2,-p.s/2,p.s,p.s*.6);ctx.restore();});
+  parts=parts.filter(p=>p.life>0&&p.y<cv.height+20);
+  if(parts.length)raf=requestAnimationFrame(loop); else {raf=null;ctx.clearRect(0,0,cv.width,cv.height);}
+}
+
+/* ============ INIT ============ */
+updateCount();
+</script>
